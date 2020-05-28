@@ -3,3 +3,6 @@ test.in
 test.s
 test.out
 ravel
+out/
+Mx.iml
+.idea/
