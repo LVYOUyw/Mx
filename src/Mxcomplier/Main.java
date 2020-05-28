@@ -20,8 +20,8 @@ import java.io.*;
 public class Main {
     public static void main(String[] args) throws Exception {
         //InputStream is = new FileInputStream("D:\\Complie homework\\Compiler-2020-local-judge\\testcase\\Compiler-2020-testcases\\sema\\loop-package\\loop-1.mx");
-        InputStream is = new FileInputStream("C:\\Users\\18617\\IdeaProjects\\Mx\\src\\1.txt");
-        //InputStream is = System.in;
+        //InputStream is = new FileInputStream("C:\\Users\\18617\\IdeaProjects\\Mx\\src\\1.txt");
+        InputStream is = System.in;
         Environment.init();
         CharStream input = CharStreams.fromStream(is);
         MxLexer lexer = new MxLexer(input);
@@ -42,7 +42,7 @@ public class Main {
             function.graph = new Graph(function);
             function.allocate = new RegisterAllocate(function);
         }
-        OutputStream os = new FileOutputStream("test.s");
+        OutputStream os = new FileOutputStream("output.s");
         new Better_Translator(new PrintStream(os)).translate();
     }
 }
