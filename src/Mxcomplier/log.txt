@@ -1,0 +1,42 @@
+Some Problem:
+class function paras
+How to get correct array size? eg. a[4][4][][]
+Why we need to add a jump before the beginning of a loop ?
+How to do with function paras have classtype ?
+returninst must be rebuild
+
+frame allocate in Naive_Translator 151 line
+
+Finish:
+almost all Expression except NewExpr
+Statement
+Block
+liveness analysis
+
+To Do:
+class-type return value
+array-type return value
+Translator
+Codegen
+
+
+notes：
+数组的分配： a[3][4]：先分配a[3]，即每个a[i]指向一段地址区域，这个地址区域存放下一维数组。
+
+伪代码：
+
+eg. a[3][4][5][][]
+
+m F:
+    if () return
+    m = allocate operand
+    t = 0
+    while t < operand
+        mm = F: next operand
+        store(m+t, mm)
+        t++
+
+    return m
+
+
+
