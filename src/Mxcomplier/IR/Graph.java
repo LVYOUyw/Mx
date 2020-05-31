@@ -67,6 +67,7 @@ public class Graph {
         }
     }
 
+
     public void init() {
         ArrayList<Instruction> instructions = new ArrayList<>();
         function.begin = new LableInst("funcbegin");

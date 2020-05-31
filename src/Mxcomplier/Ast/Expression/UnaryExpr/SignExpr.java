@@ -20,8 +20,11 @@ public class SignExpr extends UnaryExpr {
         this.sign = sig;
     }
     public static Expression getExpression(Expression expr, boolean sig) {
-        if (expr.type instanceof IntType)
+        if (expr.type instanceof IntType) {
+            if (expr instanceof IntExpr)
+                return IntExpr.getint(-((IntExpr) expr).value);
             return new SignExpr(IntType.getType(), false, expr, sig);
+        }
         throw new CompileError("Int type required");
     }
 

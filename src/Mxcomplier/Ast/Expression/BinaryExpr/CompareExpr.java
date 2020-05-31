@@ -1,6 +1,8 @@
 package Mxcomplier.Ast.Expression.BinaryExpr;
 
 import Mxcomplier.Ast.Expression.Expression;
+import Mxcomplier.Ast.Expression.UnaryExpr.BoolExpr;
+import Mxcomplier.Ast.Expression.UnaryExpr.IntExpr;
 import Mxcomplier.Ast.Type.BoolType;
 import Mxcomplier.Ast.Type.IntType;
 import Mxcomplier.Ast.Type.StringType;
@@ -23,8 +25,19 @@ public class CompareExpr extends BinaryExpr {
     }
 
     public static Expression getExpression(Expression Left, Expression Right, String oper) {
-        if (Left.type instanceof IntType && Right.type instanceof IntType)
+        if (Left.type instanceof IntType && Right.type instanceof IntType) {
+            if (Left instanceof IntExpr && Right instanceof IntExpr) {
+                int a1 = ((IntExpr) Left).value;
+                int a2 = ((IntExpr) Right).value;
+                boolean a3 = false;
+                if (oper.equals("<")) a3 = a1 < a2;
+                else if (oper.equals(">")) a3 = a1 > a2;
+                else if (oper.equals("<=")) a3 = a1 <= a2;
+                else if (oper.equals(">=")) a3 = a1 >= a2;
+                return BoolExpr.getBool(a3);
+            }
             return new CompareExpr(BoolType.getType(), false, Left, Right, oper);
+        }
         if (Left.type instanceof StringType && Right.type instanceof StringType)
             return new CompareExpr(BoolType.getType(), false, Left, Right, oper);
         throw new CompileError("Compare should between integer or string");

@@ -23,10 +23,16 @@ public class NotExpr extends UnaryExpr {
     }
 
     public static Expression getExpression(Expression expr, boolean op) {
-        if (expr.type instanceof IntType && op)
+        if (expr.type instanceof IntType && op) {
+            if (expr instanceof IntExpr)
+                return IntExpr.getint(~((IntExpr) expr).value);
             return new NotExpr(IntType.getType(), false, expr, op);
-        if (expr.type instanceof BoolType && !op)
+        }
+        if (expr.type instanceof BoolType && !op) {
+            if (expr instanceof BoolExpr)
+                return BoolExpr.getBool(!((BoolExpr) expr).value);
             return new NotExpr(BoolType.getType(), false, expr, op);
+        }
         throw new CompileError("Not operation should act on bool or int");
     }
 

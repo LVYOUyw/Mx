@@ -1,6 +1,8 @@
 package Mxcomplier.Ast.Expression.BinaryExpr;
 
 import Mxcomplier.Ast.Expression.Expression;
+import Mxcomplier.Ast.Expression.UnaryExpr.IntExpr;
+import Mxcomplier.Ast.Expression.UnaryExpr.StringExpr;
 import Mxcomplier.Ast.Type.*;
 import Mxcomplier.Environment.Environment;
 import Mxcomplier.Error.CompileError;
@@ -20,10 +22,27 @@ public class ArithExpr extends BinaryExpr {
         this.op = oper;
     }
     public static Expression getExpression(Expression Left, Expression Right, String oper) {
-        if (Left.type instanceof IntType && Right.type instanceof IntType)
+        if (Left.type instanceof IntType && Right.type instanceof IntType) {
+            if (Left instanceof IntExpr && Right instanceof IntExpr) {
+                int a1 = ((IntExpr) Left).value;
+                int a2 = ((IntExpr) Right).value;
+                int a3 = 0;
+                if (oper.equals("+")) a3 = a1 + a2;
+                else if (oper.equals("-")) a3 = a1 - a2;
+                else if (oper.equals("*")) a3 = a1 * a2;
+                else if (oper.equals("/")) a3 = a1 / a2;
+                else if (oper.equals("<<")) a3 = a1 << a2;
+                else if (oper.equals(">>")) a3 = a1 >> a2;
+                return IntExpr.getint(a3);
+            }
             return new ArithExpr(IntType.getType(), false, Left, Right, oper);
-        else if (Left.type instanceof StringType && Right.type instanceof StringType && oper.equals("+"))
+        }
+        else if (Left.type instanceof StringType && Right.type instanceof StringType && oper.equals("+")) {
+            if (Left instanceof StringExpr && Right instanceof StringExpr)
+                return StringExpr.getstring(((StringExpr) Left).value + ((StringExpr) Right).value);
+
             return new ArithExpr(StringType.getType(), false, Left, Right, oper);
+        }
         throw new CompileError("ArithExpr should between integer or string");
     }
 

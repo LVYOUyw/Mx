@@ -7,13 +7,22 @@ import Mxcomplier.IR.Instruction.*;
 import Mxcomplier.IR.Operand.*;
 
 import java.io.PrintStream;
+import java.util.HashMap;
+import java.util.HashSet;
 
 public class Better_Translator extends Translator {
     Graph G;
     public RegisterAllocate allocate;
+    public HashMap<Integer, Integer> pow2;
 
     public Better_Translator(PrintStream output) {
         super(output);
+        pow2 = new HashMap<>();
+        int t = 2;
+        for (int i = 1; i < 31; i++) {
+            pow2.put(t, i);
+            t = t * 2;
+        }
     }
 
     public PhysicalRegister getregister(VirtualRegister s, PhysicalRegister t) {
@@ -97,26 +106,38 @@ public class Better_Translator extends Translator {
         }
     }
 
-    void callersave() {
+    void callersave(Function function) {
         output.printf("\taddi\t\tsp, sp, %d\n", -32 * 4);
-        for (PhysicalRegister pr: PhysicalRegister.caller)
-            output.printf("\tsw\t\t%s, %d(sp)\n", pr.name, pr.id * 4);
+       /* if (true) {
+            for (PhysicalRegister pr : PhysicalRegister.caller)
+                output.printf("\tsw\t\t%s, %d(sp)\n", pr.name, pr.id * 4);
+        }
+        else {*/
+            for (PhysicalRegister pr : G.function.allocate.usedcaller)
+                output.printf("\tsw\t\t%s, %d(sp)\n", pr.name, pr.id * 4);
+        //}
     }
 
-    void callerresume() {
-        for (PhysicalRegister pr: PhysicalRegister.caller)
-            output.printf("\tlw\t\t%s, %d(sp)\n", pr.name, pr.id * 4);
+    void callerresume(Function function) {
+        /*if (true) {
+            for (PhysicalRegister pr : PhysicalRegister.caller)
+                output.printf("\tlw\t\t%s, %d(sp)\n", pr.name, pr.id * 4);
+        }
+        else {*/
+            for (PhysicalRegister pr : G.function.allocate.usedcaller)
+                output.printf("\tlw\t\t%s, %d(sp)\n", pr.name, pr.id * 4);
+        //}
         output.printf("\taddi\t\tsp, sp, %d\n", 32 * 4);
     }
 
     void calleesave() {
         output.printf("\taddi\t\tsp, sp, %d\n", -32 * 4);
-        for (PhysicalRegister pr: PhysicalRegister.callee)
+        for (PhysicalRegister pr: G.function.allocate.usedcallee)
             output.printf("\tsw\t\t%s, %d(sp)\n", pr.name, pr.id * 4);
     }
 
     void calleeresume() {
-        for (PhysicalRegister pr: PhysicalRegister.callee)
+        for (PhysicalRegister pr: G.function.allocate.usedcallee)
             output.printf("\tlw\t\t%s, %d(sp)\n", pr.name, pr.id * 4);
         output.printf("\taddi\t\tsp, sp, %d\n", 32 * 4);
     }
@@ -252,10 +273,10 @@ public class Better_Translator extends Translator {
                         } else if (op.equals("<")) {
                             output.printf("\tslti\t\t%s, %s, %d\n", t2.name, t0.name, value);
                         } else if (op.equals("<=")) {
-                          output.printf("\txori\t\tt2, %s, %d\n", t0.name, value);
-                          output.printf("\tseqz\t\tt2, t2\n");
-                          output.printf("\tslti\t\tt1, %s, %d\n", t0.name, value);
-                          output.printf("\tor\t\t%s, t1, t2\n", t2.name);
+                            output.printf("\txori\t\tt2, %s, %d\n", t0.name, value);
+                            output.printf("\tseqz\t\tt2, t2\n");
+                            output.printf("\tslti\t\tt1, %s, %d\n", t0.name, value);
+                            output.printf("\tor\t\t%s, t1, t2\n", t2.name);
                         } else if (op.equals("!=")) {
                             output.printf("\txori\t\t%s, %s, %d\n", t2.name, t0.name, value);
                             output.printf("\tsnez\t\t%s, %s\n", t2.name, t2.name);
@@ -264,8 +285,8 @@ public class Better_Translator extends Translator {
                         else if (op.equals("-"))
                             output.printf("\taddi\t\t%s, %s, %d\n", t2.name, t0.name, -value);
                         else if (op.equals("*")) {
-                            if (value == 4)
-                                output.printf("\tslli\t\t%s, %s, %d\n", t2.name, t0.name, 2);
+                            if (pow2.containsKey(value))
+                                output.printf("\tslli\t\t%s, %s, %d\n", t2.name, t0.name, pow2.get(value));
                             else {
                                 t1 = loadsrc(PhysicalRegister.t1, binst.src2);
                                 output.printf("\tmul\t\t%s, %s, %s\n", t2.name, t0.name, t1.name);
@@ -273,8 +294,12 @@ public class Better_Translator extends Translator {
 
                         }
                         else if (op.equals("/")) {
-                            t1 = loadsrc(PhysicalRegister.t1, binst.src2);
-                            output.printf("\tdiv\t\t%s, %s, %s\n", t2.name, t0.name, t1.name);
+                            if (pow2.containsKey(value))
+                                output.printf("\tsrli\t\t%s, %s, %d\n", t2.name, t0.name, pow2.get(value));
+                            else {
+                                t1 = loadsrc(PhysicalRegister.t1, binst.src2);
+                                output.printf("\tdiv\t\t%s, %s, %s\n", t2.name, t0.name, t1.name);
+                            }
                         }
                         else if (op.equals("%")) {
                             t1 = loadsrc(PhysicalRegister.t1, binst.src2);
@@ -337,26 +362,25 @@ public class Better_Translator extends Translator {
                 }
                 else if (inst instanceof CallInst) {
                     CallInst cinst = (CallInst)inst;
-                    callersave();
+                    callersave(cinst.function);
                     if (cinst.function.name.startsWith("__")) {
-                        output.printf("\taddi\t\tsp, sp, -32\n");
                         if (cinst.paras.size() >= 1) {
-                            t0 = loadsrc(PhysicalRegister.a0, cinst.paras.get(0), 160);
+                            t0 = loadsrc(PhysicalRegister.a0, cinst.paras.get(0), 128);
                             if (t0 != PhysicalRegister.a0)
                                 output.printf("\tmv\t\ta0, %s\n", t0.name);
                         }
                         if (cinst.paras.size() >= 2) {
-                            t0 = loadsrc(PhysicalRegister.a1, cinst.paras.get(1), 160);
+                            t0 = loadsrc(PhysicalRegister.a1, cinst.paras.get(1), 128);
                             if (t0 != PhysicalRegister.a1)
                                 output.printf("\tmv\t\ta1, %s\n", t0.name);
                         }
                         if (cinst.paras.size() >= 3) {
-                            t0 = loadsrc(PhysicalRegister.a2, cinst.paras.get(2), 160);
+                            t0 = loadsrc(PhysicalRegister.a2, cinst.paras.get(2), 128);
                             if (t0 != PhysicalRegister.a2)
                                 output.printf("\tmv\t\ta2, %s\n", t0.name);
                         }
                         if (cinst.paras.size() >= 4) {
-                            t0 = loadsrc(PhysicalRegister.a3, cinst.paras.get(3), 160);
+                            t0 = loadsrc(PhysicalRegister.a3, cinst.paras.get(3), 128);
                             if (t0 != PhysicalRegister.a3)
                                 output.printf("\tmv\t\ta3, %s\n", t0.name);
                         }
@@ -389,9 +413,7 @@ public class Better_Translator extends Translator {
                             }
                     }
                     output.printf("\tcall\t%s\n", cinst.function.name);
-                    if (cinst.function.name.startsWith("__"))
-                        output.printf("\taddi\t\tsp, sp, 32\n");
-                    callerresume();
+                    callerresume(cinst.function);
                     if (cinst.dest != null)
                         store(cinst.dest, PhysicalRegister.a0);
                 }
@@ -430,12 +452,12 @@ public class Better_Translator extends Translator {
                 }
                 else if (inst instanceof AllocateInst) {
                     AllocateInst ainst = (AllocateInst)inst;
-                    callersave();
+                    callersave(null);
                     t0 = loadsrc(PhysicalRegister.a0, ainst.size, 128); //a0
                     if (t0 != PhysicalRegister.a0)
                         output.printf("\tmv\t\ta0, %s\n", t0.name);
                     output.printf("\tcall\t__malloc\n");
-                    callerresume();
+                    callerresume(null);
                     store(ainst.dest,PhysicalRegister.a0);
                 }
             }

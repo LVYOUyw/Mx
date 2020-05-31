@@ -13,6 +13,8 @@ import java.util.HashSet;
 
 public class RegisterAllocate {
     public HashMap<VirtualRegister, PhysicalRegister> allocate;
+    public HashSet<PhysicalRegister> usedcallee;
+    public HashSet<PhysicalRegister> usedcaller;
     public Function function;
     public RegisterGraph G;
     public HashSet<VirtualRegister> visit;
@@ -22,6 +24,8 @@ public class RegisterAllocate {
         allocate = new HashMap<>();
         G = new RegisterGraph();
         this.visit = new HashSet<>();
+        usedcallee = new HashSet<>();
+        usedcaller = new HashSet<>();
 
         for (Block block: function.graph.blocks)
             for (Instruction inst: block.instructions) {
@@ -68,6 +72,8 @@ public class RegisterAllocate {
             if (!visit.contains(vir))
                 dfs(vir);
         }
+        if (!usedcaller.contains(PhysicalRegister.ra))
+            usedcaller.add(PhysicalRegister.ra);
     }
 
     private void dfs(VirtualRegister x) {
@@ -90,6 +96,10 @@ public class RegisterAllocate {
         for (PhysicalRegister phy: PhysicalRegister.registers) {
             if (!allocate.containsKey(x) && !S.contains(phy)) {
                 allocate.put(x, phy);
+                if (PhysicalRegister.callee.contains(phy))
+                    usedcallee.add(phy);
+                if (PhysicalRegister.caller.contains(phy))
+                    usedcaller.add(phy);
                 break;
             }
         }
