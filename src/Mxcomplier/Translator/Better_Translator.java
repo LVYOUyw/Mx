@@ -1,7 +1,6 @@
 package Mxcomplier.Translator;
 
 import Mxcomplier.Ast.Type.Function;
-import Mxcomplier.Environment.Environment;
 import Mxcomplier.IR.Block;
 import Mxcomplier.IR.Graph;
 import Mxcomplier.IR.Instruction.*;
@@ -9,6 +8,7 @@ import Mxcomplier.IR.Operand.*;
 
 import java.io.PrintStream;
 import java.util.HashMap;
+import java.util.HashSet;
 
 public class Better_Translator extends Translator {
     Graph G;
@@ -35,8 +35,8 @@ public class Better_Translator extends Translator {
     public PhysicalRegister loadsrc(PhysicalRegister dest, Operand src, int... opt) {
         if (src instanceof Immediate) {
             int value = ((Immediate) src).value;
-            if (value < 2048)
-                output.printf("\taddi\t\t%s, x0, %d\n", dest.name, value);
+            if (value == 0)
+                output.printf("\tmv\t\t%s, x0\n", dest.name);
             else
                 output.printf("\tli\t\t%s, %s\n", dest.name, String.valueOf(value));
         }
@@ -53,7 +53,6 @@ public class Better_Translator extends Translator {
             }
             else {
                 int offset = G.frame.getOffset(src);
-                int p = offset / 4;
                 if (opt.length != 0) offset += opt[0];
                 PhysicalRegister register = allocate.allocate.get(src);
                 if (type == 2 && register != null) return register;
@@ -109,47 +108,29 @@ public class Better_Translator extends Translator {
 
     void callersave(Function function) {
         output.printf("\taddi\t\tsp, sp, %d\n", -32 * 4);
-        if (function == null)
-            output.printf("\tsw\t\tra, %d(sp)\n", PhysicalRegister.ra.id * 4);
-        else
-            for (PhysicalRegister pr : G.function.allocate.usedcaller) {
-                if (function.allocate.usedcaller.contains(pr))
-                    output.printf("\tsw\t\t%s, %d(sp)\n", pr.name, pr.id * 4);
-            }
-}
+        for (PhysicalRegister pr : G.function.allocate.usedcaller)
+            if (function == null || function.name.startsWith("__") || function.allocate.usedcaller.contains(pr))
+                output.printf("\tsw\t\t%s, %d(sp)\n", pr.name, pr.id * 4);
+        //}
+    }
 
     void callerresume(Function function) {
-        if (function == null)
-            output.printf("\tlw\t\tra, %d(sp)\n", PhysicalRegister.ra.id * 4);
-        else
-            for (PhysicalRegister pr : G.function.allocate.usedcaller) {
-                if (function.allocate.usedcaller.contains(pr))
-                    output.printf("\tlw\t\t%s, %d(sp)\n", pr.name, pr.id * 4);
-            }
+        for (PhysicalRegister pr : G.function.allocate.usedcaller)
+            if (function == null || function.name.startsWith("__") || function.allocate.usedcaller.contains(pr))
+                output.printf("\tlw\t\t%s, %d(sp)\n", pr.name, pr.id * 4);
+        //}
         output.printf("\taddi\t\tsp, sp, %d\n", 32 * 4);
     }
 
     void calleesave() {
         output.printf("\taddi\t\tsp, sp, %d\n", -32 * 4);
-        int cnt = 0;
         for (PhysicalRegister pr: G.function.allocate.usedcallee)
-            if (G.function.allocate.cntcall.containsKey(pr)) {
-                //System.out.println(G.function.allocate.cntcall.get(pr));
-                if (G.function.allocate.cntcall.get(pr) > 1) {
-                    output.printf("\tsw\t\t%s, %d(sp)\n", pr.name, pr.id * 4);
-                }
-            }
+            output.printf("\tsw\t\t%s, %d(sp)\n", pr.name, pr.id * 4);
     }
 
     void calleeresume() {
-        int cnt = 0;
         for (PhysicalRegister pr: G.function.allocate.usedcallee)
-            if (G.function.allocate.cntcall.containsKey(pr)) {
-                if (G.function.allocate.cntcall.get(pr) > 1) {
-                    output.printf("\tlw\t\t%s, %d(sp)\n", pr.name, pr.id * 4);
-                }
-            }
-
+            output.printf("\tlw\t\t%s, %d(sp)\n", pr.name, pr.id * 4);
         output.printf("\taddi\t\tsp, sp, %d\n", 32 * 4);
     }
 
@@ -165,13 +146,13 @@ public class Better_Translator extends Translator {
                 if (function.name.startsWith("__")) continue;
                 for (PhysicalRegister py: G.function.allocate.usedcallee) {
                     if (function.allocate.cntcall.containsKey(py)) {
-                        System.out.println(function.name);
                         function.allocate.cntcall.put(py, 2);
                     }
                 }
             }
         }
     }
+
 
     @Override
     public void translate(Function f) {
@@ -393,7 +374,7 @@ public class Better_Translator extends Translator {
                 }
                 else if (inst instanceof CallInst) {
                     CallInst cinst = (CallInst)inst;
-                    callersave(cinst.function.name.startsWith("__")?null:cinst.function);
+                    callersave(cinst.function);
                     if (cinst.function.name.startsWith("__")) {
                         if (cinst.paras.size() >= 1) {
                             t0 = loadsrc(PhysicalRegister.a0, cinst.paras.get(0), 128);
@@ -441,11 +422,10 @@ public class Better_Translator extends Translator {
                             else {
                                 output.printf("\tli\t\tt0, %d\n", psize);
                                 output.printf("\tadd\t\tsp, sp, t0\n");
-
                             }
                     }
                     output.printf("\tcall\t%s\n", cinst.function.name);
-                    callerresume(cinst.function.name.startsWith("__")?null:cinst.function);
+                    callerresume(cinst.function);
                     if (cinst.dest != null)
                         store(cinst.dest, PhysicalRegister.a0);
                 }

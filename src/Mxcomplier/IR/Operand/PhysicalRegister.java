@@ -94,11 +94,11 @@ public class PhysicalRegister {
         add(PhysicalRegister.s9);
         add(PhysicalRegister.s10);
         add(PhysicalRegister.s11);
-        add(PhysicalRegister.a1);
+        /*add(PhysicalRegister.a1);
         add(PhysicalRegister.a2);
         add(PhysicalRegister.a3);
         add(PhysicalRegister.a4);
-        add(PhysicalRegister.a5);
+        add(PhysicalRegister.a5);*/
         add(PhysicalRegister.a6);
         add(PhysicalRegister.a7);
         add(PhysicalRegister.t3);
