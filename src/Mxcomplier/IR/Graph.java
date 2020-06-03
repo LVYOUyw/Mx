@@ -4,29 +4,23 @@ import Mxcomplier.Ast.Statement.VardecStmt;
 import Mxcomplier.Ast.Type.Function;
 import Mxcomplier.Environment.Environment;
 import Mxcomplier.Environment.Symbol;
-import Mxcomplier.IR.Instruction.*;
+import Mxcomplier.IR.Instruction.BranchInst;
+import Mxcomplier.IR.Instruction.Instruction;
+import Mxcomplier.IR.Instruction.JumpInst;
+import Mxcomplier.IR.Instruction.LableInst;
 import Mxcomplier.IR.Operand.VirtualRegister;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.HashSet;
 
 public class Graph {
     public Function function;
     public ArrayList<Block> blocks;
-    public ArrayList<Track> tracks;
     public Frame frame;
-    public HashSet<Integer> S;
-    public boolean hascall;
 
     public Graph(Function function) {
         this.function = function;
         this.init();
-        hascall = false;
-    }
-
-    public String blockname(Block block) {
-        return String.format("%s_%d_%s\n", block.function.name, block.id, block.name);
     }
 
     public void livenessAnalysis() {
@@ -73,26 +67,6 @@ public class Graph {
         }
     }
 
-    public void reorder() {
-        S = new HashSet<>();
-        tracks = new ArrayList<>();
-        while (!blocks.isEmpty()) {
-            Track T = new Track();
-            Block b = blocks.get(0);
-            blocks.remove(b);
-            while (!S.contains(b.id)) {
-                S.add(b.id);
-                T.add(b);
-                for (Block c: b.succ) {
-                    if (!S.contains(c.id)) {
-                        b = c;
-                        break;
-                    }
-                }
-            }
-            tracks.add(T);
-        }
-    }
 
     public void init() {
         ArrayList<Instruction> instructions = new ArrayList<>();
@@ -151,43 +125,9 @@ public class Graph {
             }
         }
 
-        reorder();
-        blocks = new ArrayList<>();
-        for (Track t: tracks) {
-            for (int k = 0; k < t.blocks.size() - 1; k++) {
-                Block block = t.blocks.get(k);
-                Block nblock = t.blocks.get(k + 1);
-                if (block.instructions.size() == 0) continue;
-                Instruction endinst = block.instructions.get(block.instructions.size() - 1);
-                if (endinst instanceof JumpInst) {
-                    LableInst goal = ((JumpInst) endinst).dest;
-                   // System.out.println(goal.Lablename());
-                   // System.out.println(blockname(nblock));
-                   // System.out.println("------");
-                    String s1 = goal.Lablename();
-                    String s2 = blockname(nblock);
-                    if (s1.equals(s2)) {
-                        block.instructions.remove(endinst);
-                        //System.out.println("remove");
-                    }
-                }
-                blocks.add(block);
-            }
-            if (t.blocks.size() > 0)
-                blocks.add(t.blocks.get(t.blocks.size() - 1));
-        }
-        /*for (Track t: tracks) {
-            for (Block block: t.blocks)
-                blocks.add(block);
-        }*/
-
         HashSet<VirtualRegister> registers = new HashSet<>();
         for (Block block: blocks)
             for (Instruction inst: block.instructions) {
-                if (inst instanceof CallInst) {
-                    if (!((CallInst) inst).function.name.startsWith("__"))
-                        hascall = true;
-                }
                 //System.out.printf("%s\n", inst);
                 for (VirtualRegister vir: inst.getDestRegisters())
                     if (vir.type == 2)
