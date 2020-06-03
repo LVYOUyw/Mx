@@ -8,6 +8,7 @@ import Mxcomplier.IR.Instruction.Instruction;
 import Mxcomplier.IR.Operand.PhysicalRegister;
 import Mxcomplier.IR.Operand.VirtualRegister;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 
@@ -15,6 +16,7 @@ public class RegisterAllocate {
     public HashMap<VirtualRegister, PhysicalRegister> allocate;
     public HashSet<PhysicalRegister> usedcallee;
     public HashSet<PhysicalRegister> usedcaller;
+    public HashMap<PhysicalRegister, Integer> cntcall;
     public Function function;
     public RegisterGraph G;
     public HashSet<VirtualRegister> visit;
@@ -26,6 +28,7 @@ public class RegisterAllocate {
         this.visit = new HashSet<>();
         usedcallee = new HashSet<>();
         usedcaller = new HashSet<>();
+        cntcall = new HashMap<>();
 
         for (Block block: function.graph.blocks)
             for (Instruction inst: block.instructions) {
@@ -74,6 +77,8 @@ public class RegisterAllocate {
         }
         if (!usedcaller.contains(PhysicalRegister.ra))
             usedcaller.add(PhysicalRegister.ra);
+        for (PhysicalRegister py: usedcallee)
+            cntcall.put(py, 1);
     }
 
     private void dfs(VirtualRegister x) {
@@ -96,6 +101,7 @@ public class RegisterAllocate {
         for (PhysicalRegister phy: PhysicalRegister.registers) {
             if (!allocate.containsKey(x) && !S.contains(phy)) {
                 allocate.put(x, phy);
+                Environment.unused.remove(phy);
                 if (PhysicalRegister.callee.contains(phy))
                     usedcallee.add(phy);
                 if (PhysicalRegister.caller.contains(phy))

@@ -71,6 +71,10 @@ public class Naive_Translator extends Translator {
         }
     }
 
+    public void init(Function f) {
+
+    }
+
     @Override
     public void translate(Function f) {
         this.G = f.graph;

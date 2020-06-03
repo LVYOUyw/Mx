@@ -3,7 +3,9 @@ package Mxcomplier.Environment;
 import Mxcomplier.Ast.Statement.VardecStmt;
 import Mxcomplier.Ast.Type.*;
 import Mxcomplier.Error.CompileError;
+import Mxcomplier.IR.Operand.PhysicalRegister;
 import Mxcomplier.IR.Operand.VirtualRegister;
+import Mxcomplier.IR.Optimize;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -20,6 +22,7 @@ public class Environment {
     public static List<Function> functions;
     public static List<VardecStmt> globalvars;
     public static int exprid;
+    public static ArrayList<PhysicalRegister> unused;
 
     public static void init() {
         scopeTable = new ScopeTable();
@@ -32,6 +35,8 @@ public class Environment {
         globalvars = new ArrayList<>();
         registerTable = new RegisterTable();
         exprid = 0;
+        unused = new ArrayList<>();
+        unused.addAll(PhysicalRegister.registers);
         Environment.buildfunction();
     }
 

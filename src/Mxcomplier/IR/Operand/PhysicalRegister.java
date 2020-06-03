@@ -58,10 +58,10 @@ public class PhysicalRegister {
 
     public static ArrayList<PhysicalRegister> caller = new ArrayList<>() {{
         add(PhysicalRegister.ra);
-        add(PhysicalRegister.t0);
-        add(PhysicalRegister.t1);
-        add(PhysicalRegister.t2);
-       // add(PhysicalRegister.a0);
+       // add(PhysicalRegister.t0);
+       // add(PhysicalRegister.t1);
+       // add(PhysicalRegister.t2);
+      //  add(PhysicalRegister.a0);
         add(PhysicalRegister.a1);
         add(PhysicalRegister.a2);
         add(PhysicalRegister.a3);
@@ -75,7 +75,14 @@ public class PhysicalRegister {
         add(PhysicalRegister.t6);
     }};
 
+    public static ArrayList<PhysicalRegister> tmp = new ArrayList<>() {{
+         add(PhysicalRegister.t0);
+         add(PhysicalRegister.t1);
+         add(PhysicalRegister.t2);
+    }};
+
     public static ArrayList<PhysicalRegister> registers = new ArrayList<>() {{
+
         add(PhysicalRegister.s1);
         add(PhysicalRegister.s2);
         add(PhysicalRegister.s3);
@@ -98,6 +105,7 @@ public class PhysicalRegister {
         add(PhysicalRegister.t4);
         add(PhysicalRegister.t5);
         add(PhysicalRegister.t6);
+
     }};
 
     public PhysicalRegister(int id, String name) {

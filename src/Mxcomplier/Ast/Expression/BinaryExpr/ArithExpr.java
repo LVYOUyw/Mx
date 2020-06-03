@@ -59,7 +59,9 @@ public class ArithExpr extends BinaryExpr {
             operands.add(RightExpression.operand);
             instructions.add(new CallInst((VirtualRegister) operand, (Function)Environment.symbolTable.get("string+").type, operands));
         }
-        else
-        instructions.add(new BinaryInst((VirtualRegister)operand, LeftExpression.operand, RightExpression.operand, op));
+        else {
+
+            instructions.add(new BinaryInst((VirtualRegister) operand, LeftExpression.operand, RightExpression.operand, op));
+        }
     }
 }

@@ -22,6 +22,8 @@ public abstract class Translator {
     }
 
     public void translate() throws Exception {
+        for (Function function: Environment.functions)
+            init(function);
 
         output.printf(".data\n");
         for (VardecStmt var: Environment.globalvars) {
@@ -44,5 +46,7 @@ public abstract class Translator {
     }
 
     public abstract void translate(Function f);
+
+    public abstract void init(Function f);
 
 }
