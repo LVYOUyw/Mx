@@ -36,7 +36,7 @@ public class Environment {
         registerTable = new RegisterTable();
         exprid = 0;
         unused = new ArrayList<>();
-        unused.addAll(PhysicalRegister.registers);
+        unused.addAll(PhysicalRegister.callee);
         Environment.buildfunction();
     }
 

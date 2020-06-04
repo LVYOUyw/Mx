@@ -42,7 +42,7 @@ public class PhysicalRegister {
 
     public static ArrayList<PhysicalRegister> callee = new ArrayList<>() {{
        // add(PhysicalRegister.sp);
-        add(PhysicalRegister.s0);
+       // add(PhysicalRegister.s0);
         add(PhysicalRegister.s1);
         add(PhysicalRegister.s2);
         add(PhysicalRegister.s3);

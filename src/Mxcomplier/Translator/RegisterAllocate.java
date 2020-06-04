@@ -8,9 +8,7 @@ import Mxcomplier.IR.Instruction.Instruction;
 import Mxcomplier.IR.Operand.PhysicalRegister;
 import Mxcomplier.IR.Operand.VirtualRegister;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.HashSet;
+import java.util.*;
 
 public class RegisterAllocate {
     public HashMap<VirtualRegister, PhysicalRegister> allocate;
@@ -71,6 +69,7 @@ public class RegisterAllocate {
             }
         }
 
+      //  Collections.shuffle(PhysicalRegister.registers);
         for (VirtualRegister vir: G.nodes) {
             if (!visit.contains(vir))
                 dfs(vir);
@@ -98,6 +97,7 @@ public class RegisterAllocate {
             if (allocate.containsKey(y))
                 S.add(allocate.get(y));
         S.add(null);
+
         for (PhysicalRegister phy: PhysicalRegister.registers) {
             if (!allocate.containsKey(x) && !S.contains(phy)) {
                 allocate.put(x, phy);

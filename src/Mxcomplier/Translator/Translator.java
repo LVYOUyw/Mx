@@ -5,9 +5,11 @@ import Mxcomplier.Ast.Type.Function;
 import Mxcomplier.Environment.Environment;
 import Mxcomplier.IR.Block;
 import Mxcomplier.IR.Graph;
+import Mxcomplier.IR.Operand.PhysicalRegister;
 import Mxcomplier.IR.Operand.StringRegister;
 
 import java.io.PrintStream;
+import java.util.HashMap;
 
 public abstract class Translator {
     public static PrintStream output;
@@ -24,7 +26,7 @@ public abstract class Translator {
     public void translate() throws Exception {
         for (Function function: Environment.functions)
             init(function);
-
+        int t = 0;
         output.printf(".data\n");
         for (VardecStmt var: Environment.globalvars) {
             output.printf(".globl %s\n",var.symbol.name);

@@ -1,6 +1,7 @@
 package Mxcomplier.Translator;
 
 import Mxcomplier.Ast.Type.Function;
+import Mxcomplier.Environment.Environment;
 import Mxcomplier.IR.Block;
 import Mxcomplier.IR.Graph;
 import Mxcomplier.IR.Instruction.*;
@@ -124,13 +125,25 @@ public class Better_Translator extends Translator {
 
     void calleesave() {
         output.printf("\taddi\t\tsp, sp, %d\n", -32 * 4);
-        for (PhysicalRegister pr: G.function.allocate.usedcallee)
-            output.printf("\tsw\t\t%s, %d(sp)\n", pr.name, pr.id * 4);
+        int cnt = 1;
+        for (PhysicalRegister pr: G.function.allocate.usedcallee) {
+            if (!G.hascall && cnt <= 5) {
+                output.printf("\tmv\t\ta%d, %s\n", cnt, pr.name);
+                cnt++;
+            }
+            else output.printf("\tsw\t\t%s, %d(sp)\n", pr.name, pr.id * 4);
+        }
     }
 
     void calleeresume() {
-        for (PhysicalRegister pr: G.function.allocate.usedcallee)
-            output.printf("\tlw\t\t%s, %d(sp)\n", pr.name, pr.id * 4);
+        int cnt = 1;
+        for (PhysicalRegister pr: G.function.allocate.usedcallee) {
+            if (!G.hascall && cnt <= 5) {
+                output.printf("\tmv\t\t%s, a%d\n", pr.name, cnt);
+                cnt++;
+            }
+            else output.printf("\tlw\t\t%s, %d(sp)\n", pr.name, pr.id * 4);
+        }
         output.printf("\taddi\t\tsp, sp, %d\n", 32 * 4);
     }
 
@@ -157,6 +170,8 @@ public class Better_Translator extends Translator {
     @Override
     public void translate(Function f) {
         this.G = f.graph;
+        if (!G.hascall)
+            System.out.println(f.name);
         this.allocate = f.allocate;
         output.printf("\n");
         output.printf("%s:\n", G.function.name);
@@ -177,6 +192,7 @@ public class Better_Translator extends Translator {
             //output.printf("%d\n",block.instructions.size());
             for (int j = 0; j < block.instructions.size(); j++) {
                 Instruction inst = block.instructions.get(j);
+
                 //System.out.printf("%s\n",inst);
                 if (flag) {
                     flag = false;
@@ -349,13 +365,36 @@ public class Better_Translator extends Translator {
                 }
                 else if (inst instanceof JumpInst) {
                     JumpInst jinst = (JumpInst)inst;
+                    if (j == block.instructions.size() - 1) {
+                        if (i != G.blocks.size() - 1) {
+                            Block b = G.blocks.get(i + 1);
+                            if (b != null) {
+                                System.out.println(blockname(b));
+                                System.out.println(jinst.dest.Lablename());
+                                if (blockname(b).equals(jinst.dest.Lablename()))
+                                    continue;
+                            }
+                        }
+                    }
                     output.printf("\tj\t\t%s\n", jinst.dest.Lablename());
                 }
                 else if (inst instanceof BranchInst) {
                     BranchInst binst = (BranchInst)inst;
                     t0 = loadsrc(PhysicalRegister.t0, binst.condition);
                     output.printf("\tbeqz\t\t%s, %s\n", t0.name, binst.falseDest.Lablename());
+                    if (j == block.instructions.size() - 1) {
+                        if (i != G.blocks.size() - 1) {
+                            Block b = G.blocks.get(i + 1);
+                            if (b != null) {
+                                System.out.println(blockname(b));
+                                System.out.println(binst.trueDest.Lablename());
+                                if (blockname(b).equals(binst.trueDest.Lablename()))
+                                    continue;
+                            }
+                        }
+                    }
                     output.printf("\tbnez\t\t%s, %s\n", t0.name, binst.trueDest.Lablename());
+
                 }
                 else if (inst instanceof ReturnInst) {
                     ReturnInst rinst = (ReturnInst)inst;

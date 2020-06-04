@@ -39,7 +39,7 @@ public class ForStmt extends LoopStmt {
         LableInst forbody = new LableInst("forbody");
         loopbegin = new LableInst("forbegin");
         loopend = new LableInst("forend");
-      //  System.out.println("add loopend");
+        //  System.out.println("add loopend");
         if (init != null) {
             init.emit(instructions);
             init.load(instructions);

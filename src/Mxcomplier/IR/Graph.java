@@ -4,10 +4,7 @@ import Mxcomplier.Ast.Statement.VardecStmt;
 import Mxcomplier.Ast.Type.Function;
 import Mxcomplier.Environment.Environment;
 import Mxcomplier.Environment.Symbol;
-import Mxcomplier.IR.Instruction.BranchInst;
-import Mxcomplier.IR.Instruction.Instruction;
-import Mxcomplier.IR.Instruction.JumpInst;
-import Mxcomplier.IR.Instruction.LableInst;
+import Mxcomplier.IR.Instruction.*;
 import Mxcomplier.IR.Operand.VirtualRegister;
 
 import java.util.ArrayList;
@@ -17,10 +14,13 @@ public class Graph {
     public Function function;
     public ArrayList<Block> blocks;
     public Frame frame;
+    public boolean hascall;
 
     public Graph(Function function) {
         this.function = function;
+        hascall = false;
         this.init();
+
     }
 
     public void livenessAnalysis() {
@@ -129,6 +129,10 @@ public class Graph {
         for (Block block: blocks)
             for (Instruction inst: block.instructions) {
                 //System.out.printf("%s\n", inst);
+                if (inst instanceof CallInst || inst instanceof AllocateInst) {
+                  //  System.out.printf("true\n");
+                    hascall = true;
+                }
                 for (VirtualRegister vir: inst.getDestRegisters())
                     if (vir.type == 2)
                         registers.add(vir);

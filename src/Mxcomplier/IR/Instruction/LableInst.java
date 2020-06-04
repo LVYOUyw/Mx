@@ -16,7 +16,7 @@ public class LableInst extends Instruction {
     public String Lablename() {
         if (block == null) System.out.println("Block p");
         if (block.function == null) System.out.println("function p");
-        return String.format("%s_%d_%s\n", block.function.name, block.id, name);
+        return String.format("%s_%d_%s", block.function.name, block.id, name);
     }
 
     @Override
