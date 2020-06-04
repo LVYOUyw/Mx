@@ -42,7 +42,7 @@ public class Main {
             function.graph = new Graph(function);
             function.allocate = new RegisterAllocate(function);
         }
-        OutputStream os = new FileOutputStream("ouput.s");
+        OutputStream os = new FileOutputStream("output.s");
         new Better_Translator(new PrintStream(os)).translate();
     }
 }
